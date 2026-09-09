@@ -126,6 +126,8 @@ class RatesControllerTest < ActionController::TestCase
               assert_select 'id', text: @mock_rate.id.to_s
               assert_select 'amount', text: /100/
               assert_select 'date_in_effect'
+              assert_select 'created_on'
+              assert_select 'updated_on'
               assert_select 'locked', text: 'false'
             end
           end
@@ -140,6 +142,8 @@ class RatesControllerTest < ActionController::TestCase
           json = ActiveSupport::JSON.decode(response.body)
           assert_kind_of Array, json['rates']
           assert_equal @mock_rate.id, json['rates'].first['id']
+          assert json['rates'].first.key?('created_on')
+          assert json['rates'].first.key?('updated_on')
         end
       end
     end
@@ -164,6 +168,8 @@ class RatesControllerTest < ActionController::TestCase
           assert_select 'rate' do
             assert_select 'id', text: @mock_rate.id.to_s
             assert_select 'amount', text: /100/
+            assert_select 'created_on'
+            assert_select 'updated_on'
             assert_select 'locked', text: 'false'
             assert_select 'editable', text: 'true'
           end
@@ -177,6 +183,8 @@ class RatesControllerTest < ActionController::TestCase
           assert_response :success
           json = ActiveSupport::JSON.decode(response.body)
           assert_equal @mock_rate.id, json['rate']['id']
+          assert json['rate'].key?('created_on')
+          assert json['rate'].key?('updated_on')
         end
       end
     end
@@ -474,6 +482,23 @@ class RatesControllerTest < ActionController::TestCase
         assert_response :created
         json = ActiveSupport::JSON.decode(response.body)
         assert_equal 75.0, json['rate']['amount'].to_f
+      end
+
+      should 'ignore a submitted created_on and stamp the server time instead' do
+        forged_created_on = 10.years.ago
+        with_settings rest_api_enabled: '1' do
+          post :create,
+               params: { key: @user.api_key,
+                         rate: { project_id: @project.id, amount: '75',
+                                 date_in_effect: Time.zone.today.to_s, user_id: @user.id,
+                                 created_on: forged_created_on.to_s } },
+               format: 'json'
+        end
+
+        assert_response :created
+        json = ActiveSupport::JSON.decode(response.body)
+        created_rate = Rate.find(json['rate']['id'])
+        assert_operator created_rate.created_on, :>, 1.hour.ago
       end
 
       should 'return 422 when creating with invalid params' do

@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.4.0 — created_on/updated_on on Rate
+
+### Added
+
+- **Rates now track `created_on`/`updated_on` timestamps**, maintained
+  automatically by `ActiveRecord::Timestamp`. Both fields are exposed in the
+  read-only REST API (`GET /rates`, `GET /rates/:id`, XML and JSON).
+- **The rate history/API list can be sorted by `updated_on`** in addition to
+  `date_in_effect` and `project_id`.
+- A migration adds the nullable columns plus an index on `updated_on`,
+  backfilling existing rows from `date_in_effect`. Copying rates to a new
+  project (project copy) excludes `created_on`/`updated_on` so copies get
+  fresh timestamps instead of inheriting the source's.
+
+### Changed
+
+- Bumped plugin version to `2.4.0`.
+
 ## 2.3.0 — Optional user_id, project_id filter and pagination on the rates API
 
 ### Added

@@ -15,6 +15,7 @@ class RatesController < ApplicationController
 
   VALID_SORT_OPTIONS = {
     'date_in_effect' => "#{Rate.table_name}.date_in_effect",
+    'updated_on' => "#{Rate.table_name}.updated_on",
     'project_id' => "#{Project.table_name}.name"
   }.freeze
 

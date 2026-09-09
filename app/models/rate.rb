@@ -1,6 +1,8 @@
 require 'lockfile'
 
 class Rate < ActiveRecord::Base
+  # created_on/updated_on (Redmine's timestamp naming, added in migration 006) are
+  # maintained automatically by ActiveRecord::Timestamp -- no callback needed here.
   class InvalidParameterException < RuntimeError; end
   CACHING_LOCK_FILE_NAME = 'rate_cache'.freeze
 

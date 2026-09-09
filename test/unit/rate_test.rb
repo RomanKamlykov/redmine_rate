@@ -128,6 +128,28 @@ class RateTest < ActiveSupport::TestCase
     end
   end
 
+  context 'timestamps' do
+    should 'set created_on and updated_on when created' do
+      rate = Rate.generate!
+
+      assert_not_nil rate.created_on
+      assert_not_nil rate.updated_on
+    end
+
+    should 'advance updated_on but not created_on on a later save' do
+      rate = Rate.generate!
+      # Backdate created_on (bypassing callbacks) so the assertion below doesn't
+      # depend on clock precision between the two saves.
+      rate.update_column(:created_on, 1.hour.ago)
+      original_created_on = rate.reload.created_on
+
+      rate.update(amount: rate.amount + 1)
+
+      assert_equal original_created_on, rate.reload.created_on
+      assert_operator rate.updated_on, :>, original_created_on
+    end
+  end
+
   context '#destroy' do
     should 'should destroy the Rate if should is unlocked' do
       rate = Rate.create(rate_valid_attributes)

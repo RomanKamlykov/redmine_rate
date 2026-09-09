@@ -6,6 +6,8 @@ module RateHelper
       api.id             rate.id
       api.amount         rate.amount
       api.date_in_effect rate.date_in_effect
+      api.created_on     rate.created_on
+      api.updated_on     rate.updated_on
       api.locked         rate.locked?
       # locked rates stay writable while the lock is disabled in the settings
       api.editable       rate.editable?

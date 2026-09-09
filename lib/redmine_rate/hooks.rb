@@ -16,7 +16,9 @@ module RedmineRate
         Rate.where(project_id: source.id).each do |source_rate|
           destination_rate = Rate.new
 
-          destination_rate.attributes = source_rate.attributes.except('project_id')
+          # created_on/updated_on must not carry over: the copy is a new record, and
+          # Rails' timestamp callbacks only fill a column that is still nil.
+          destination_rate.attributes = source_rate.attributes.except('project_id', 'created_on', 'updated_on')
           destination_rate.project = destination
           destination_rate.save # Need to save here because there is no relation on project to rate
         end
