@@ -1,5 +1,40 @@
 # Changelog
 
+## 2.5.0 — Soft-delete rates
+
+### Added
+
+- **Deleting a rate (web UI or REST API) is now a soft delete.** The row is
+  kept with a `deleted_on` timestamp instead of being removed, so an external
+  system mirroring rates through the REST API can detect the deletion on its
+  next incremental sync instead of the row simply disappearing.
+  - `Rate#soft_delete` replaces the plain `#destroy` call in
+    `RatesController#destroy`; it refuses exactly where `#destroy` used to (a
+    locked rate with the lock enforced), bumps `updated_on` through the normal
+    save chain, and is a no-op if the rate is already deleted.
+  - A deleted rate is excluded from `Rate.history_for_user`/`Rate.for` and from the web
+    UI (`Rate.not_deleted`/`Rate.deleted` scopes), and can no longer be edited
+    (`RatesController#update` now rejects it with the new
+    `rate_deleted_message`, translated in all five locales).
+  - The REST API exposes `deleted` and `deleted_on` per rate. Deleted rates
+    are **not** filtered out of `GET /rates`/`GET /rates/:id` — they stay
+    listed (with `deleted: true`) so an incremental consumer can see the
+    deletion rather than losing the id silently. `editable` is now `false`
+    for a deleted rate too.
+  - `TimeEntry#costinfo` treats a time entry's already-assigned rate as gone
+    once that rate is soft-deleted, falling back to `Rate.for` the same as if
+    `rate_id` were nil, instead of continuing to price against a deleted rate.
+  - Project copy excludes `deleted_on` from the copied attributes (like
+    `created_on`/`updated_on`), so a copy is never born deleted.
+  - A migration adds the nullable `deleted_on` column (no index — every real
+    query already filters by `user_id`/`project_id` first).
+  - Restoring or purging a deleted rate has no web UI or API; it is a
+    console-only operation for administrators.
+
+### Changed
+
+- Bumped plugin version to `2.5.0`.
+
 ## 2.4.0 — created_on/updated_on on Rate
 
 ### Added
